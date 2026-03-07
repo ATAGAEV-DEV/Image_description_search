@@ -23,7 +23,8 @@ polza = "https://api.polza.ai/api/v1"
 class LlamaIndexManager:
     """Управляет интеграцией с LlamaIndex и ChromaDB для работы с описаниями изображений."""
 
-    def __init__(self, collection_name: str = "image_descriptions"):
+    def __init__(self, collection_name: str = "image_descriptions") -> None:
+        """Инициализирует менеджер LlamaIndex и ChromaDB."""
         self.custom_client = AsyncOpenAI(
             api_key=AI_TOKEN_AITUNNEL,
             base_url=aitunnel,
@@ -42,24 +43,16 @@ class LlamaIndexManager:
         Settings.embed_model = self.embed_model
         Settings.node_parser = self.node_parser
 
-    def get_collection(self):
-        """Получить или создать коллекцию для изображений"""
+    def get_collection(self) -> Any:
+        """Получить или создать коллекцию для изображений."""
         try:
             collection = self.db.get_collection(self.collection_name)
-        except:
+        except Exception:
             collection = self.db.create_collection(self.collection_name)
         return collection
 
     async def index_images(self, images: list[dict[str, Any]]) -> bool:
-        """Индексирует описания картинок в ChromaDB.
-
-        Args:
-            images: Список словарей с ключами 'id', 'name', 'description'
-
-        Returns:
-            bool: Успешно ли выполнена индексация
-
-        """
+        """Индексирует описания картинок в ChromaDB."""
         try:
             documents = []
             for img in images:
@@ -94,16 +87,7 @@ class LlamaIndexManager:
             return False
 
     async def search_images(self, query: str, limit: int = 5) -> list[dict[str, Any]]:
-        """Ищет изображения по текстовому запросу (только по описаниям).
-
-        Args:
-            query: Текстовый запрос для поиска
-            limit: Количество возвращаемых результатов
-
-        Returns:
-            List[Dict]: Список найденных изображений с названием и описанием
-
-        """
+        """Ищет изображения по текстовому запросу (только по описаниям)."""
         try:
             collection = self.get_collection()
             vector_store = ChromaVectorStore(chroma_collection=collection)
