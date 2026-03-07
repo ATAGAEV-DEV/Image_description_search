@@ -60,8 +60,8 @@ async def password_handler(message: Message, state: FSMContext) -> None:
 
 
 @router.message(Command("sync"))
-async def sync_images_handler(message: Message):
-    """Синхронизирует изображения из БД в ChromaDB с защитой от дубликатов"""
+async def sync_images_handler(message: Message) -> None:
+    """Синхронизирует изображения из БД в ChromaDB с защитой от дубликатов."""
     user_id = message.from_user.id
     user = await req.get_user_by_id(user_id)
     if not user:
@@ -106,8 +106,8 @@ async def sync_images_handler(message: Message):
 
 
 @router.message(Command("stats"))
-async def stats_handler(message: Message):
-    """Показывает статистику базы данных"""
+async def stats_handler(message: Message) -> None:
+    """Показывает статистику базы данных."""
     user_id = message.from_user.id
     user = await req.get_user_by_id(user_id)
     if not user:
@@ -136,8 +136,8 @@ async def stats_handler(message: Message):
 
 
 @router.message(Command("search"))
-async def search_images_handler(message: Message):
-    """Ищет изображения по описанию и отправляет найденные файлы"""
+async def search_images_handler(message: Message) -> None:
+    """Ищет изображения по описанию и отправляет найденные файлы."""
     user_id = message.from_user.id
     user = await req.get_user_by_id(user_id)
     if not user:
@@ -175,7 +175,7 @@ async def search_images_handler(message: Message):
 
 
 @router.message(F.photo)
-async def photo_upload_handler(message: Message):
+async def photo_upload_handler(message: Message) -> None:
     """Сохраняет фотографии, отправленные пользователями, в папку pictures.
 
     Проверяет расширение файла, сохраняет изображение, затем обрабатывает его
@@ -206,8 +206,9 @@ async def photo_upload_handler(message: Message):
             extension = ""
 
         if not extension or extension.lower() not in ALLOWED_EXTENSIONS:
+            allowed_formats = ", ".join(ALLOWED_EXTENSIONS)
             await message.answer(
-                f"❌ Недопустимое расширение файла. Поддерживаемые форматы: {', '.join(ALLOWED_EXTENSIONS)}"
+                f"❌ Недопустимое расширение файла. Поддерживаемые форматы: {allowed_formats}"
             )
             return
 
