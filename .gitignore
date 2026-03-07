@@ -3,3 +3,6 @@
 /.python-version
 /chroma_db
 /.idea
+/.agent
+.DS_Store
+__pycache__/
