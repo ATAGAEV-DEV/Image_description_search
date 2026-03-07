@@ -8,7 +8,7 @@ def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
 
-def clean_text(text):
+def clean_text(text: str) -> str:
     """Очищает текст от markdown-стилей: **, *, ###, ##, #."""
     cleaned_text = re.sub(r"(\*\*|\*|###|##|#)", "", text)
     cleaned_text = re.sub(r"\n+", " ", cleaned_text)
@@ -17,5 +17,6 @@ def clean_text(text):
 
 
 def encode_image_to_base64(image_path: str) -> str:
+    """Кодирует изображение в формат Base64."""
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode("utf-8")
