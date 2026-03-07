@@ -1,6 +1,6 @@
 import asyncio
 
-from sqlalchemy import func, select
+from sqlalchemy import select, text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.data.models import (
@@ -88,53 +88,54 @@ async def add_processed_image_description(image_desc: ImageDescription):
         print(f"Ошибка добавления в обработанные: {e}")
 
 
-async def create_image_description(name: str, description: str) -> bool:
-    """Вставляет новую запись в таблицу image_descriptions."""
-    try:
-        async with async_session() as session:
-            new_record = ImageDescription(name=name, description=description)
-            session.add(new_record)
-            await asyncio.wait_for(session.commit(), timeout=DB_TIMEOUT)
-            return True
+async def reset_image_description_sequence() -> None:
+    """Синхронизирует PostgreSQL sequence таблицы image_descriptions с max(id).
 
-    except TimeoutError:
-        print(f"Ошибка: Превышено время ожидания ({DB_TIMEOUT} секунд) при сохранении в БД")
-        return False
-
-    except SQLAlchemyError as e:
-        print(f"Ошибка базы данных при сохранении описания для {name}: {e}")
-        return False
-
-    except Exception as e:
-        print(f"Неожиданная ошибка при сохранении описания для {name}: {e}")
-        return False
-
-
-async def add_image_description_with_id(name: str, description: str) -> bool:
-    """Добавляет новую запись в таблицу image_descriptions с защитой от дублей по ID.
-
-    Получает максимальный ID из таблицы, добавляет 1 и вставляет запись с новым ID.
+    Необходимо вызывать при старте бота, чтобы autoincrement генерировал
+    корректные ID после вставки данных с явными ID.
     """
     try:
         async with async_session() as session:
-            query = select(func.max(ImageDescription.id))
-            result = await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
-            max_id = result.scalar()
-            new_id = (max_id + 1) if max_id else 1
-
-            new_record = ImageDescription(id=new_id, name=name, description=description)
-            session.add(new_record)
-            await asyncio.wait_for(session.commit(), timeout=DB_TIMEOUT)
-            return True
-
-    except TimeoutError:
-        print(f"Ошибка: Превышено время ожидания ({DB_TIMEOUT} секунд) при сохранении в БД")
-        return False
-
-    except SQLAlchemyError as e:
-        print(f"Ошибка базы данных при сохранении описания для {name}: {e}")
-        return False
-
+            await session.execute(
+                text(
+                    "SELECT setval("
+                    "pg_get_serial_sequence('image_descriptions', 'id'), "
+                    "COALESCE((SELECT MAX(id) FROM image_descriptions), 0))"
+                )
+            )
+            await session.commit()
+            print("Sequence image_descriptions синхронизирован")
     except Exception as e:
-        print(f"Неожиданная ошибка при сохранении описания для {name}: {e}")
-        return False
+        print(f"Ошибка синхронизации sequence: {e}")
+
+
+async def create_image_description(name: str, description: str, max_retries: int = 3) -> bool:
+    """Вставляет новую запись в таблицу image_descriptions.
+
+    Использует retry-логику с экспоненциальной задержкой для устойчивости
+    к transient-ошибкам БД.
+    """
+    for attempt in range(max_retries):
+        try:
+            async with async_session() as session:
+                new_record = ImageDescription(name=name, description=description)
+                session.add(new_record)
+                await asyncio.wait_for(session.commit(), timeout=DB_TIMEOUT)
+                return True
+
+        except TimeoutError:
+            print(
+                f"Таймаут при сохранении описания для {name} (попытка {attempt + 1}/{max_retries})"
+            )
+
+        except SQLAlchemyError as e:
+            print(
+                f"Ошибка БД при сохранении описания для {name} "
+                f"(попытка {attempt + 1}/{max_retries}): {e}"
+            )
+
+        if attempt < max_retries - 1:
+            await asyncio.sleep(0.5 * (2**attempt))
+
+    print(f"Не удалось сохранить описание для {name} после {max_retries} попыток")
+    return False
