@@ -245,18 +245,9 @@ async def photo_upload_handler(message: Message):
                 f"✅ Изображение успешно обработано!\n\n📝 Описание:\n{description}"
             )
         else:
-            success = await req.add_image_description_with_id(
-                os.path.basename(destination), description
-            )
-
-            if success:
-                await message.answer(
-                    f"✅ Изображение успешно обработано!\n\n📝 Описание:\n{description}"
-                )
-            else:
-                if os.path.exists(destination):
-                    os.remove(destination)
-                await message.answer("❌ Не удалось сохранить описание изображения в базу данных")
+            if os.path.exists(destination):
+                os.remove(destination)
+            await message.answer("❌ Не удалось сохранить описание изображения в базу данных")
 
     except Exception as e:
         await message.answer(f"❌ Ошибка при обработке изображения: {str(e)}")
