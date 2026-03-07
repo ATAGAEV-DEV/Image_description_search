@@ -13,7 +13,7 @@ from app.data.models import (
 DB_TIMEOUT = 10
 
 
-async def get_user_by_id(user_id: int):
+async def get_user_by_id(user_id: int) -> Users | None:
     """Выполняет запрос к БД для получения пользователя из базы по user_id."""
     try:
         async with async_session() as session:
@@ -41,8 +41,8 @@ async def add_user(user_id: int, username: str) -> None:
         print(f"Ошибка добавления пользователя: {e}")
 
 
-async def get_all_image_descriptions():
-    """Получает все записи из ImageDescription"""
+async def get_all_image_descriptions() -> list[ImageDescription]:
+    """Получает все записи из ImageDescription."""
     try:
         async with async_session() as session:
             query = select(ImageDescription)
@@ -56,8 +56,8 @@ async def get_all_image_descriptions():
         return []
 
 
-async def get_processed_image_ids():
-    """Получает ID уже обработанных записей"""
+async def get_processed_image_ids() -> set[int]:
+    """Получает ID уже обработанных записей."""
     try:
         async with async_session() as session:
             query = select(ProcessedImageDescriptions.id)
@@ -71,8 +71,8 @@ async def get_processed_image_ids():
         return set()
 
 
-async def add_processed_image_description(image_desc: ImageDescription):
-    """Добавляет запись в ProcessedImageDescriptions"""
+async def add_processed_image_description(image_desc: ImageDescription) -> None:
+    """Добавляет запись в ProcessedImageDescriptions."""
     try:
         async with async_session() as session:
             processed_record = ProcessedImageDescriptions(
