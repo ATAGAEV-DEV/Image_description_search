@@ -35,6 +35,8 @@ class Base(AsyncAttrs, DeclarativeBase):
 
 
 class ImageDescription(Base):
+    """Модель таблицы 'image_descriptions' для хранения текстовых описаний."""
+
     __tablename__ = "image_descriptions"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -44,6 +46,8 @@ class ImageDescription(Base):
 
 
 class ProcessedImageDescriptions(Base):
+    """Модель таблицы 'processed_image_descriptions' для отслеживания обработанных фото."""
+
     __tablename__ = "processed_image_descriptions"
 
     id = Column(Integer, primary_key=True)
