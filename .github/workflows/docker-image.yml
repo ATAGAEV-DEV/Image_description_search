@@ -1,63 +1,45 @@
-name: Deploy to Remote Server
+name: Deploy to Local Server
 
 on:
   workflow_dispatch:
   # push:
   #   branches: [ "main" ]
-  # pull_request:
-  #   branches: [ "main" ]
 
 jobs:
   build_deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
-      # Шаг 1: Клонирование репозитория
-      - uses: actions/checkout@v4
+      # Шаг 1: Скачиваем свежий код прямо на домашний сервер
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      # Шаг 2: Сборка Docker-образа
+      # Шаг 2: Сборка Docker-образа локально
       - name: Build Docker image
         run: docker build . --file Dockerfile --tag imagetelegrambot:latest
 
-      # Шаг 3: Экспорт Docker-образа в tar-файл
-      - name: Save Docker image as tar file
-        run: docker save imagetelegrambot:latest -o image_imagetelegram.tar
+      # Шаг 3: Остановка старого контейнера и создание томов
+      - name: Stop and remove old container, create volumes
+        run: |
+          docker stop tgimagebot || true
+          docker rm tgimagebot || true
+          docker volume create chroma_data_telegram || true
+          docker volume create pictures_data || true
 
-      # Шаг 4: Изменение прав доступа к файлу (для успешного копирования)
-      - name: Set permissions on image_imagetelegram.tar
-        run: chmod 644 image_imagetelegram.tar
+      # Шаг 4: Запуск нового контейнера с передачей всех нужных переменных окружения и томов
+      - name: Run new container
+        run: |
+          docker run -d --name tgimagebot \
+            --restart unless-stopped \
+            -v chroma_data_telegram:/python-app/chroma_db \
+            -v pictures_data:/python-app/app/pictures \
+            -e AI_TOKEN="${{ secrets.AI_TOKEN }}" \
+            -e AI_TOKEN1="${{ secrets.AI_TOKEN1 }}" \
+            -e AI_TOKEN_POLZA="${{ secrets.AI_TOKEN_POLZA }}" \
+            -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+            -e TG_TOKEN="${{ secrets.TG_TOKEN }}" \
+            imagetelegrambot:latest
 
-      # Шаг 5: Передача tar-файла на сервер с помощью scp
-      - name: Copy Docker image to server via scp
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.DEPLOY_SERVER_HOST }}
-          username: ${{ secrets.DEPLOY_SERVER_USER }}
-          password: ${{ secrets.DEPLOY_SERVER_PASSWORD }}
-          port: 22
-          source: "image_imagetelegram.tar"
-          target: "~/deploy/"
-
-      # Шаг 6: Загрузка образа и запуск контейнера на удалённом сервере по SSH
-      - name: Load image and run container on remote server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.DEPLOY_SERVER_HOST }}
-          username: ${{ secrets.DEPLOY_SERVER_USER }}
-          password: ${{ secrets.DEPLOY_SERVER_PASSWORD }}
-          port: 22
-          script: |
-            docker load -i ~/deploy/image_imagetelegram.tar
-            docker stop tgimagebot || true
-            docker rm tgimagebot || true
-            docker volume create chroma_data_telegram || true
-            docker volume create pictures_data || true
-            docker run -d --name tgimagebot \
-              -v chroma_data_telegram:/python-app/chroma_db \
-              -v pictures_data:/python-app/app/pictures \
-              -e AI_TOKEN="${{ secrets.AI_TOKEN }}" \
-              -e AI_TOKEN1="${{ secrets.AI_TOKEN1 }}" \
-              -e AI_TOKEN_POLZA="${{ secrets.AI_TOKEN_POLZA }}" \
-              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-              -e TG_TOKEN="${{ secrets.TG_TOKEN }}" \
-              imagetelegrambot:latest
+      # Шаг 5 (Опционально): Очистка старых "повисших" образов, чтобы не забивать память мини-ПК
+      - name: Clean up unused Docker images
+        run: docker image prune -f
