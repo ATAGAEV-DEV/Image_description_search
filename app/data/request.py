@@ -1,6 +1,7 @@
 import asyncio
 
 from sqlalchemy import select, text
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.data.models import (
@@ -14,14 +15,19 @@ DB_TIMEOUT = 10
 
 
 async def get_user_by_id(user_id: int) -> Users | None:
-    """Выполняет запрос к БД для получения пользователя из базы по user_id."""
+    """Получает пользователя из базы данных по его идентификатору.
+
+    Выполняет асинхронный запрос к базе данных для поиска записи в таблице 'users'
+    с указанным user_id. Возвращает объект пользователя или None, если пользователь
+    не найден. В случае ошибки выводит сообщение об ошибке и возвращает None.
+    """
     try:
         async with async_session() as session:
             query = select(Users).where(Users.user_id == user_id)
             result = await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
             return result.scalar_one_or_none()
     except TimeoutError:
-        print(f"Таймаут при получении пользователя {user_id}")
+        print(f"Таймаут при получении пользователя с user_id={user_id}")
         return None
     except Exception as e:
         print(f"Ошибка получения пользователя: {e}")
@@ -29,14 +35,22 @@ async def get_user_by_id(user_id: int) -> Users | None:
 
 
 async def add_user(user_id: int, username: str) -> None:
-    """Добавляет пользователя в БД."""
+    """Добавляет нового пользователя или обновляет существующего в базе данных.
+
+    Использует upsert (INSERT ... ON CONFLICT DO UPDATE) для безопасного
+    добавления пользователя. Если пользователь уже существует, обновляется username.
+    """
     try:
         async with async_session() as session:
-            user = Users(user_id=user_id, username=username)
-            session.add(user)
+            stmt = pg_insert(Users).values(user_id=user_id, username=username)
+            stmt = stmt.on_conflict_do_update(
+                index_elements=["user_id"],
+                set_={"username": username},
+            )
+            await asyncio.wait_for(session.execute(stmt), timeout=DB_TIMEOUT)
             await asyncio.wait_for(session.commit(), timeout=DB_TIMEOUT)
     except TimeoutError:
-        print(f"Таймаут при добавлении пользователя {user_id}")
+        print(f"Таймаут при добавлении пользователя с user_id={user_id}")
     except Exception as e:
         print(f"Ошибка добавления пользователя: {e}")
 
