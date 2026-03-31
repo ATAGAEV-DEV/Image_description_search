@@ -11,7 +11,7 @@ from app.data.models import (
     async_session,
 )
 
-DB_TIMEOUT = 10
+DB_TIMEOUT = 30
 
 
 async def get_user_by_id(user_id: int) -> Users | None:
@@ -60,7 +60,7 @@ async def get_all_image_descriptions() -> list[ImageDescription]:
     try:
         async with async_session() as session:
             query = select(ImageDescription)
-            result = await asyncio.wait_for(session.execute(query), timeout=60)
+            result = await asyncio.wait_for(session.execute(query), timeout=120)
             return result.scalars().all()
     except TimeoutError:
         print("Таймаут при получении всех описаний")
@@ -75,7 +75,7 @@ async def get_processed_image_ids() -> set[int]:
     try:
         async with async_session() as session:
             query = select(ProcessedImageDescriptions.id)
-            result = await asyncio.wait_for(session.execute(query), timeout=60)
+            result = await asyncio.wait_for(session.execute(query), timeout=120)
             return set([row[0] for row in result])
     except TimeoutError:
         print("Таймаут при получении обработанных ID")
