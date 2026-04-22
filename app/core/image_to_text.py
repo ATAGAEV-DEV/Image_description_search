@@ -16,6 +16,7 @@ polza = "https://api.polza.ai/api/v1"
 client = AsyncOpenAI(
     api_key=AI_TOKEN_POLZA,
     base_url=polza,
+    timeout=60.0,
 )
 
 
