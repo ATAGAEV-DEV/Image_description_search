@@ -24,7 +24,7 @@ async def ai_generate(message: list) -> Any | None:
     """Генерирует описание изображения с помощью AI."""
     try:
         completion = await client.chat.completions.create(
-            model="google/gemini-2.0-flash-001",
+            model="google/gemini-2.5-flash-lite",
             messages=message,
             temperature=0.1,
         )
