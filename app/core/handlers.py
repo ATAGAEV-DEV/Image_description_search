@@ -42,6 +42,25 @@ async def start_handler(message: Message, state: FSMContext) -> None:
         await state.set_state(RegisterState.waiting_for_password)
 
 
+@router.message(Command("help"))
+async def help_handler(message: Message) -> None:
+    """Обрабатывает команду /help.
+
+    Отправляет пользователю список доступных команд с описанием.
+    """
+    help_text = (
+        "📖 <b>Доступные команды:</b>\n\n"
+        "/start — запуск бота и авторизация\n"
+        "/help — список команд\n"
+        "/search <запрос> — поиск изображений по описанию\n"
+        "/sync — синхронизация изображений из базы данных в поисковый индекс\n"
+        "/stats — статистика базы данных\n\n"
+        "📸 <b>Загрузка изображений:</b>\n"
+        "Отправьте фото — бот автоматически сохранит его и создаст описание с помощью AI."
+    )
+    await message.answer(help_text, parse_mode="HTML")
+
+
 @router.message(RegisterState.waiting_for_password)
 async def password_handler(message: Message, state: FSMContext) -> None:
     """Обрабатывает ввод пароля пользователем для авторизации.
@@ -144,7 +163,8 @@ async def search_images_handler(message: Message) -> None:
         await message.answer("Сначала авторизуйтесь с помощью /start")
         return
 
-    search_query = message.text.replace("/search", "").strip()
+    parts = message.text.split(maxsplit=1)
+    search_query = parts[1].strip() if len(parts) > 1 else ""
 
     if not search_query:
         await message.answer("Введите запрос для поиска:\n/search <ваш запрос>")
