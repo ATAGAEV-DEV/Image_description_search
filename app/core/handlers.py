@@ -254,7 +254,7 @@ async def photo_upload_handler(message: Message) -> None:
             temporary_path = Path(temporary_file.name)
 
         await bot.download(photo.file_id, destination=str(temporary_path))
-        mime_type, _, _ = ut.validate_image_file(temporary_path)
+        mime_type, _, _ = ut.validate_image_file(temporary_path, extension)
 
         filename = f"{photo.file_unique_id}{extension}"
         destination = Path(PICTURES_DIR) / filename
