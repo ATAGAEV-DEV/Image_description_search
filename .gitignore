@@ -1,8 +1,41 @@
-/.env
-/.continue
-/.python-version
-/chroma_db
-/.idea
-/.agent
-.DS_Store
+# Secrets and environment files
+.env
+.env.*
+!.env.example
+
+# Local application data
+/chroma_db/
+/app/pictures/
+
+# Python
 __pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Tool caches
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# IDE and local configuration
+.idea/
+.vscode/
+.continue/
+.agent/
+
+# OS files
+.DS_Store
+Thumbs.db
