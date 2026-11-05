@@ -8,7 +8,6 @@ from llama_index.core import Document, Settings, StorageContext, VectorStoreInde
 from llama_index.core.node_parser import SimpleNodeParser
 from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.vector_stores.chroma import ChromaVectorStore
-from openai import AsyncOpenAI
 
 load_dotenv()
 
@@ -21,11 +20,6 @@ class LlamaIndexManager:
 
     def __init__(self, collection_name: str = "image_descriptions") -> None:
         """Инициализирует менеджер LlamaIndex и ChromaDB."""
-        self.custom_client = AsyncOpenAI(
-            api_key=AI_TOKEN,
-            base_url=AI_PROVIDER_URL,
-        )
-
         self.embed_model = OpenAIEmbedding(
             api_key=AI_TOKEN,
             api_base=AI_PROVIDER_URL,
