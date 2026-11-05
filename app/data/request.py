@@ -1,6 +1,6 @@
 import asyncio
 
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -100,27 +100,6 @@ async def add_processed_image_description(image_desc: ImageDescription) -> None:
         print(f"Таймаут при добавлении описания {image_desc.id}")
     except Exception as e:
         print(f"Ошибка добавления в обработанные: {e}")
-
-
-async def reset_image_description_sequence() -> None:
-    """Синхронизирует PostgreSQL sequence таблицы image_descriptions с max(id).
-
-    Необходимо вызывать при старте бота, чтобы autoincrement генерировал
-    корректные ID после вставки данных с явными ID.
-    """
-    try:
-        async with async_session() as session:
-            await session.execute(
-                text(
-                    "SELECT setval("
-                    "pg_get_serial_sequence('image_descriptions', 'id'), "
-                    "COALESCE((SELECT MAX(id) FROM image_descriptions), 0))"
-                )
-            )
-            await session.commit()
-            print("Sequence image_descriptions синхронизирован")
-    except Exception as e:
-        print(f"Ошибка синхронизации sequence: {e}")
 
 
 async def create_image_description(name: str, description: str, max_retries: int = 3) -> bool:
