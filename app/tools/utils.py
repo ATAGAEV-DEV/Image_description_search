@@ -37,10 +37,14 @@ def encode_image_to_base64(image_path: str) -> str:
         return base64.b64encode(image_file.read()).decode("utf-8")
 
 
-def validate_image_file(image_path: str | Path) -> tuple[str, int, int]:
+def validate_image_file(
+    image_path: str | Path,
+    source_extension: str | None = None,
+) -> tuple[str, int, int]:
     """Проверяет размер, формат и разрешение изображения."""
     path = Path(image_path)
-    extension_mime = IMAGE_MIME_TYPES.get(path.suffix.lower())
+    extension = source_extension or path.suffix
+    extension_mime = IMAGE_MIME_TYPES.get(extension.lower())
     if extension_mime is None:
         raise ValueError("Поддерживаются только изображения JPG и PNG")
 
