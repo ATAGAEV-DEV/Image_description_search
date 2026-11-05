@@ -36,6 +36,7 @@ jobs:
             -e AI_TOKEN="${{ secrets.AI_TOKEN }}" \
             -e AI_PROVIDER_URL="${{ secrets.AI_PROVIDER_URL }}" \
             -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+            -e DATABASE_SCHEMA="${{ secrets.DATABASE_SCHEMA }}" \
             -e TG_TOKEN="${{ secrets.TG_TOKEN }}" \
             imagetelegrambot:latest
 
