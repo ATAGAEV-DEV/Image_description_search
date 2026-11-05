@@ -12,12 +12,8 @@ from openai import AsyncOpenAI
 
 load_dotenv()
 
-AI_TOKEN_PROXYAPI = os.getenv("AI_TOKEN")
-AI_TOKEN_AITUNNEL = os.getenv("AI_TOKEN1")
-AI_TOKEN_POLZA = os.getenv("AI_TOKEN_POLZA")
-proxyapi = "https://api.proxyapi.ru/openai/v1"
-aitunnel = "https://api.aitunnel.ru/v1/"
-polza = "https://api.polza.ai/api/v1"
+AI_TOKEN = os.getenv("AI_TOKEN")
+AI_PROVIDER_URL = os.getenv("AI_PROVIDER_URL")
 
 
 class LlamaIndexManager:
@@ -26,13 +22,13 @@ class LlamaIndexManager:
     def __init__(self, collection_name: str = "image_descriptions") -> None:
         """Инициализирует менеджер LlamaIndex и ChromaDB."""
         self.custom_client = AsyncOpenAI(
-            api_key=AI_TOKEN_AITUNNEL,
-            base_url=aitunnel,
+            api_key=AI_TOKEN,
+            base_url=AI_PROVIDER_URL,
         )
 
         self.embed_model = OpenAIEmbedding(
-            api_key=AI_TOKEN_AITUNNEL,
-            api_base=aitunnel,
+            api_key=AI_TOKEN,
+            api_base=AI_PROVIDER_URL,
             model="text-embedding-3-large",
         )
 
