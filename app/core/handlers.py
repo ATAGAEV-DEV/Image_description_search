@@ -1,4 +1,7 @@
 import os
+import tempfile
+from contextlib import suppress
+from pathlib import Path
 
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
@@ -215,18 +218,23 @@ async def photo_upload_handler(message: Message) -> None:
         return
 
     photo = message.photo[-1]
+    bot = message.bot
+    if bot is None:
+        await message.answer("❌ Не удалось получить доступ к Telegram API")
+        return
+
+    temporary_path: Path | None = None
+    created_path: Path | None = None
+    keep_file = False
 
     try:
-        file = await message.bot.get_file(photo.file_id)
+        file = await bot.get_file(photo.file_id)
 
         if not file.file_path:
             await message.answer("❌ Не удалось получить путь к файлу")
             return
 
-        if file.file_path:
-            _, extension = os.path.splitext(file.file_path)
-        else:
-            extension = ""
+        extension = Path(file.file_path).suffix.lower()
 
         if not extension or extension.lower() not in ALLOWED_EXTENSIONS:
             allowed_formats = ", ".join(ALLOWED_EXTENSIONS)
@@ -237,42 +245,60 @@ async def photo_upload_handler(message: Message) -> None:
 
         os.makedirs(PICTURES_DIR, exist_ok=True)
 
-        filename = f"{photo.file_unique_id}{extension}"
-        destination = os.path.join(PICTURES_DIR, filename)
+        with tempfile.NamedTemporaryFile(
+            dir=PICTURES_DIR,
+            prefix=f".{photo.file_unique_id}-",
+            suffix=".tmp",
+            delete=False,
+        ) as temporary_file:
+            temporary_path = Path(temporary_file.name)
 
-        if os.path.exists(destination):
+        await bot.download(photo.file_id, destination=str(temporary_path))
+        mime_type, _, _ = ut.validate_image_file(temporary_path)
+
+        filename = f"{photo.file_unique_id}{extension}"
+        destination = Path(PICTURES_DIR) / filename
+
+        if destination.exists():
             await message.answer(
-                f"❌ Файл с таким именем уже существует: {os.path.basename(destination)}. "
+                f"❌ Файл с таким именем уже существует: {destination.name}. "
                 f"Пожалуйста, отправьте другое изображение."
             )
             return
 
-        await message.bot.download(photo.file_id, destination=str(destination))
-        await message.answer(f"📸 Изображение сохранено как {os.path.basename(destination)}")
+        temporary_path.replace(destination)
+        temporary_path = None
+        created_path = destination
+        await message.answer(f"📸 Изображение загружено как {destination.name}")
 
         await message.answer("🤖 Обрабатываю изображение...")
 
-        prompt = generate_prompt(destination)
+        prompt = generate_prompt(str(destination), mime_type)
         description = await ai_generate(prompt)
 
         if not description:
-            print(f"Не удалось получить описание для {filename}, пропуск файла\n")
-            if os.path.exists(destination):
-                os.remove(destination)
             await message.answer("❌ Не удалось обработать изображение")
             return
 
-        success = await req.create_image_description(os.path.basename(destination), description)
+        success = await req.create_image_description(destination.name, description)
 
         if success:
+            keep_file = True
             await message.answer(
                 f"✅ Изображение успешно обработано!\n\n📝 Описание:\n{description}"
             )
         else:
-            if os.path.exists(destination):
-                os.remove(destination)
             await message.answer("❌ Не удалось сохранить описание изображения в базу данных")
 
+    except ValueError as e:
+        await message.answer(f"❌ {e}")
     except Exception as e:
         await message.answer(f"❌ Ошибка при обработке изображения: {str(e)}")
         print(f"Ошибка в photo_upload_handler: {str(e)}")
+    finally:
+        if temporary_path is not None:
+            with suppress(OSError):
+                temporary_path.unlink(missing_ok=True)
+        if created_path is not None and not keep_file:
+            with suppress(OSError):
+                created_path.unlink(missing_ok=True)
