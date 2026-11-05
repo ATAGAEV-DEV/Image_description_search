@@ -44,7 +44,7 @@ async def ai_generate(message: list) -> Any | None:
         print(f"Неожиданная ошибка: {e}")
 
 
-def generate_prompt(image_path: str) -> list[dict[str, Any]]:
+def generate_prompt(image_path: str, mime_type: str) -> list[dict[str, Any]]:
     """Генерирует промпт для AI на основе изображения."""
     prompt = (
         "Опиши коротко содержимое этой картинки на русском языке, чтобы потом по "
@@ -67,7 +67,7 @@ def generate_prompt(image_path: str) -> list[dict[str, Any]]:
                 {"type": "text", "text": prompt},
                 {
                     "type": "image_url",
-                    "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
+                    "image_url": {"url": f"data:{mime_type};base64,{base64_image}"},
                 },
             ],
         }
