@@ -80,9 +80,9 @@
 | :--- | :--- |
 | `TG_TOKEN` | Токен бота от [@BotFather](https://t.me/BotFather) в Telegram |
 | `DATABASE_URL` | URL подключения к PostgreSQL (формат: `postgresql+asyncpg://user:pass@host:port/db`) |
-| `AI_TOKEN_POLZA` | API-ключ от Polza AI для работы Gemini (распознавание картинок) |
-| `AI_TOKEN` | API-ключ (опционально, ProxyAPI) |
-| `AI_TOKEN1` | API-ключ от Aitunnel для работы OpenAI Embeddings (LlamaIndex) |
+| `DATABASE_SCHEMA` | Схема PostgreSQL; по умолчанию `public` |
+| `AI_TOKEN` | API-ключ провайдера AI |
+| `AI_PROVIDER_URL` | Адрес OpenAI-совместимого AI-провайдера |
 
 ### Шаг 3: Сборка и запуск
 
