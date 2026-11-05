@@ -81,14 +81,6 @@ class Users(Base):
 
 
 async def init_models() -> None:
-    """Создает таблицы в базе данных, если они не существуют.
-
-    Также синхронизирует sequence таблицы image_descriptions с max(id),
-    чтобы autoincrement корректно работал после вставки данных с явными ID.
-    """
+    """Создает таблицы в базе данных, если они не существуют."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-
-    from app.data.request import reset_image_description_sequence
-
-    await reset_image_description_sequence()
