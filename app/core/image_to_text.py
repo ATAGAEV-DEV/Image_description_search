@@ -8,14 +8,12 @@ from app.tools.utils import clean_text, encode_image_to_base64
 
 load_dotenv()
 
-LOCAL_API = ""
-AI_TOKEN_POLZA = os.getenv("AI_TOKEN_POLZA")
-LOCAL_MODEL = "http://172.16.0.2:1234/v1"
-polza = "https://api.polza.ai/api/v1"
+AI_TOKEN = os.getenv("AI_TOKEN")
+AI_PROVIDER_URL = os.getenv("AI_PROVIDER_URL")
 
 client = AsyncOpenAI(
-    api_key=AI_TOKEN_POLZA,
-    base_url=polza,
+    api_key=AI_TOKEN,
+    base_url=AI_PROVIDER_URL,
     timeout=60.0,
 )
 
