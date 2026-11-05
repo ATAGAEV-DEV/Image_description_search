@@ -14,6 +14,7 @@ dependencies = [
     "llama-index-embeddings-openai>=0.5.1",
     "llama-index-vector-stores-chroma>=0.5.3",
     "openai>=1.109.1",
+    "pillow>=12.0.0",
     "sqlalchemy>=2.0.44",
 ]
 
