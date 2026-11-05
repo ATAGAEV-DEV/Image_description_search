@@ -36,6 +36,14 @@ class ImageValidationTests(unittest.TestCase):
 
         self.assertEqual(result, ("image/jpeg", 640, 480))
 
+    def test_valid_png_with_temporary_suffix_uses_original_extension(self) -> None:
+        path = self.create_image_file(".tmp", "PNG", (640, 480))
+        self.addCleanup(path.unlink, missing_ok=True)
+
+        result = validate_image_file(path, ".png")
+
+        self.assertEqual(result, ("image/png", 640, 480))
+
     def test_rejects_extension_and_content_mismatch(self) -> None:
         path = self.create_image_file(".jpg", "PNG", (640, 480))
         self.addCleanup(path.unlink, missing_ok=True)
