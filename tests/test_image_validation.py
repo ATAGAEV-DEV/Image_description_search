@@ -13,9 +13,8 @@ from app.tools.utils import (
 
 class ImageValidationTests(unittest.TestCase):
     def create_image_file(self, suffix: str, image_format: str, size: tuple[int, int]) -> Path:
-        temporary_file = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
-        temporary_file.close()
-        path = Path(temporary_file.name)
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as temporary_file:
+            path = Path(temporary_file.name)
         image = Image.new("RGB", size, color="white")
         image.save(path, format=image_format)
         return path
@@ -52,20 +51,18 @@ class ImageValidationTests(unittest.TestCase):
             validate_image_file(path)
 
     def test_rejects_invalid_image_content(self) -> None:
-        temporary_file = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
-        temporary_file.write(b"not an image")
-        temporary_file.close()
-        path = Path(temporary_file.name)
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temporary_file:
+            temporary_file.write(b"not an image")
+            path = Path(temporary_file.name)
         self.addCleanup(path.unlink, missing_ok=True)
 
         with self.assertRaisesRegex(ValueError, "корректным изображением"):
             validate_image_file(path)
 
     def test_rejects_files_over_five_megabytes(self) -> None:
-        temporary_file = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
-        temporary_file.write(b"0" * (MAX_IMAGE_SIZE_BYTES + 1))
-        temporary_file.close()
-        path = Path(temporary_file.name)
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temporary_file:
+            temporary_file.write(b"0" * (MAX_IMAGE_SIZE_BYTES + 1))
+            path = Path(temporary_file.name)
         self.addCleanup(path.unlink, missing_ok=True)
 
         with self.assertRaisesRegex(ValueError, "5 МБ"):
